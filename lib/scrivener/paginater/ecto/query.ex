@@ -23,12 +23,6 @@ defimpl Scrivener.Paginater, for: Ecto.Query do
   defp entries(query, repo, page_number, page_size, caller) do
     offset = page_size * (page_number - 1)
 
-    query = if is_map(query.from) && Map.has_key?(query.from, :__struct__) do
-      query.from.query
-    else
-      query
-    end
-
     query
     |> limit(^page_size)
     |> offset(^offset)
