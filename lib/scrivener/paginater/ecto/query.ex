@@ -30,15 +30,26 @@ defimpl Scrivener.Paginater, for: Ecto.Query do
   end
 
   defp total_entries(query, repo, caller) do
-    total_entries =
-      query
-      |> exclude(:preload)
-      |> exclude(:order_by)
-      |> prepare_select
-      |> count
-      |> repo.one(caller: caller)
 
-    total_entries || 0
+    query = if is_map(query.from) && Map.has_key?(query.from, :__struct__) do
+      query.from.query
+    else
+      query
+    end
+
+    primary_key =
+      query.from
+      |> elem(1)
+      |> apply(:__schema__, [:primary_key])
+      |> hd
+
+    query
+    |> exclude(:order_by)
+    |> exclude(:preload)
+    |> exclude(:select)
+    |> exclude(:group_by)
+    |> select([m], count(field(m, ^primary_key), :distinct))
+    |> repo.one!
   end
 
   defp prepare_select(
